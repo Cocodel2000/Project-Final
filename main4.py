@@ -1121,18 +1121,52 @@ if selected == 'Predictions':
                 # Store the predicted prices for the current day
                 predicted_prices.append(day_predicted_prices)
 
-            # Plotting the actual and predicted prices together
-            plt.figure(figsize=(20, 10))
-            plt.plot(df['date'], df['close'], label='Actual', color='blue')
-            for i, model_name in enumerate(['Logistic Regression', 'SVM', 'XGBoost']):
-                plt.plot(df['date'].iloc[window_size:], [pred[i] for pred in predicted_prices], label=model_name, color=['orange', 'green', 'red'][i])
-            plt.axvline(x=df['date'].iloc[window_size], linestyle='--', color='gray')
-            plt.legend()
-            plt.xticks([])
-            plt.title('Actual last year prices vs Predicted Stock Prices for the month coming')
-            plt.xlabel('Date')
-            plt.ylabel('Price')
-            plt.show()
+                # Plotting the actual prices
+                actual_trace = go.Scatter(
+                    x=df['date'],
+                    y=df['close'],
+                    name='Actual',
+                    line=dict(color='blue')
+                )
+
+                # Plotting the predicted prices for each model
+                model_names = ['Logistic Regression', 'SVM', 'XGBoost']
+                colors = ['orange', 'green', 'red']
+                predicted_traces = []
+                for i, model_name in enumerate(model_names):
+                    trace = go.Scatter(
+                        x=df['date'].iloc[window_size:],
+                        y=[pred[i] for pred in predicted_prices],
+                        name=model_name,
+                        line=dict(color=colors[i])
+                    )
+                    predicted_traces.append(trace)
+
+                # Add a vertical line
+                vertical_line = go.layout.Shape(
+                    type='line',
+                    x0=df['date'].iloc[window_size],
+                    y0=df['close'].min(),
+                    x1=df['date'].iloc[window_size],
+                    y1=df['close'].max(),
+                    line=dict(color='gray', dash='dash')
+                )
+
+                # Configure the layout
+                layout = go.Layout(
+                    showlegend=True,
+                    xaxis=dict(tickformat="%Y-%m-%d"),
+                    title='Actual vs Predicted Stock Prices',
+                    xaxis_title='Date',
+                    yaxis_title='Price'
+                )
+
+                # Create the figure
+                fig = go.Figure(data=[actual_trace] + predicted_traces, layout=layout)
+
+                # Render the figure using Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+
 
     # Creating the footer:
 
