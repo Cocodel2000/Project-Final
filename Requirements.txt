@@ -19,3 +19,9 @@ streamlit-option-menu==0.3.2
 xgboost==1.7.5
 yahoo-fin==0.8.9.1
 yfinance==0.2.12
+datetime
+plotly.graph_objs
+sklearn
+yahoo_fin
+yahoo_fin.stock_info 
+alpha_vantage.fundamentaldata
