@@ -937,13 +937,14 @@ if selected == 'Predictions':
         df['close'] = df['adjclose']
         df = df.drop(['adjclose'], axis=1)
 
-        EMA = st.container()
-        Other_models = st.container()
+        ema = st.container()
+        other_models = st.container()
 
         # EMA model:
 
-        with EMA:
+        with ema:
             st.subheader(f'EMA model for {ticker}')
+            st.markdown('')
             st.markdown('''
             You can find here the Exponential Moving Average (EMA). The EMA is a line that helps identify trends in the price of the asset. 
 
@@ -1012,8 +1013,9 @@ if selected == 'Predictions':
 
         # Other models:
 
-        with Other_models:
-            st.subheader(f'Different models trying to predicts future prices for {ticker}')
+        with other_models:
+            st.subheader(f'Different models trying to predict future prices for {ticker}')
+            st.markdown('')
             st.markdown('''
             Here you can find the training and validation accuracy of the models. It is more for the teacher purpose than for a potential user as it has no value to him. 
             On the last graph you can analyse the last year price of the stock and after the threshold the predictions made by the 3 following models. 
