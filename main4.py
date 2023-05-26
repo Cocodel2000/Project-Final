@@ -1,30 +1,27 @@
 
 # Importing the required libraries:
 
-import yfinance as yf
+from alpha_vantage.fundamentaldata import FundamentalData
+from bs4 import BeautifulSoup
 import datetime as dt
-import streamlit as st
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import finnhub
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 import requests
-#import seaborn as sb
-#import matplotlib.pyplot as plt
 from sklearn import metrics
-from streamlit_option_menu import option_menu
-from yahoo_fin import stock_info as si
-from alpha_vantage.fundamentaldata import FundamentalData
-from bs4 import BeautifulSoup
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
+import streamlit as st
+from streamlit_option_menu import option_menu
 from xgboost import XGBClassifier
-
+from yahoo_fin import stock_info as si
+import yfinance as yf
 
 # FundamentalData's key:
 
@@ -940,15 +937,17 @@ if selected == 'Predictions':
         df['close'] = df['adjclose']
         df = df.drop(['adjclose'], axis=1)
 
-        EMA = st.container()
-        Other_models = st.container()
+        ema = st.container()
+        other_models = st.container()
 
         # EMA model:
 
-        with EMA:
+        with ema:
             st.subheader(f'EMA model for {ticker}')
-            st.markdown('''You can find here the Exponential Moving Average (EMA). The EMA is a line that helps identify trends in the price of the asset. 
-           
+            st.markdown('')
+            st.markdown('''
+            You can find here the Exponential Moving Average (EMA). The EMA is a line that helps identify trends in the price of the asset. 
+
             Here's what the graph shows:
 
             The actual prices of the stock over time, the EMA, which is a smoothed average of the prices. It helps highlight the overall trend of the stock.
@@ -1014,19 +1013,20 @@ if selected == 'Predictions':
 
         # Other models:
 
-        with Other_models:
-            st.subheader(f'Different models trying to predicts future prices for {ticker}')
+        with other_models:
+            st.subheader(f'Different models trying to predict future prices for {ticker}')
+            st.markdown('')
             st.markdown('''
             Here you can find the training and validation accuracy of the models. It is more for the teacher purpose than for a potential user as it has no value to him. 
             On the last graph you can analyse the last year price of the stock and after the threshold the predictions made by the 3 following models. 
 
-            Logistic Regression:
+            **Logistic Regression:**
             Logistic Regression is useful for stock price prediction as it can model the relationship between input variables and binary outcomes, such as predicting whether a stock will increase or decrease in price, providing a probabilistic prediction.
 
-            Support Vector Classifier (SVC):
+            **Support Vector Classifier (SVC):**
             SVC with a polynomial kernel and probability estimation is beneficial for stock price prediction due to its ability to handle non-linear relationships and provide probability estimates of different price movements, aiding in decision-making.
 
-            XGBoost Classifier:
+            **XGBoost Classifier:**
             XGBoost Classifier is valuable for stock price prediction due to its ability to handle complex relationships and capture non-linear patterns in the data, resulting in accurate predictions by leveraging gradient boosting techniques.
             ''')
 
@@ -1054,7 +1054,6 @@ if selected == 'Predictions':
             df['day'] = df['date'].dt.day
             df['month'] = df['date'].dt.month
             df['year']= df['date'].dt.year
-
 
             # Add is_quarter_end column:
 
@@ -1088,85 +1087,75 @@ if selected == 'Predictions':
                 print('Validation Accuracy: ', metrics.roc_auc_score(Y_valid, models[i].predict_proba(X_valid)[:,1]))
                 print()
 
-            # Set the rolling window size
-            window_size = 230  # Number of previous days to consider for each prediction
+            # Set the rolling window size:
 
-            # Initialize a list to store the predicted prices
+            window_size = 230
+
+            # Initialize a list to store the predicted prices:
+
             predicted_prices = []
 
-            # Perform the rolling forecast
+            # Perform the rolling forecast:
+
             for i in range(window_size, len(df)):
-                # Split data into training and validation sets
                 X_train = features[i-window_size:i]
                 X_valid = features[i:i+1]
                 Y_train = target[i-window_size:i]
                 Y_valid = target[i:i+1]
 
-                # Train models and evaluate performance
+                # Train models and evaluate performance:
+
                 models = [LogisticRegression(), SVC(kernel='poly', probability=True), XGBClassifier()]
+
                 for model in models:
                     model.fit(X_train, Y_train)
 
-                # Making predictions on the validation data
+                # Making predictions on the validation data:
+
                 last_close = df['close'].iloc[i-1]
                 preds = []
                 for model in models:
                     preds.append(model.predict_proba(X_valid)[:, 1])
 
-                # Computing the predicted prices based on the last closing price and the predicted probabilities
+                # Computing the predicted prices based on the last closing price and the predicted probabilities:
+
                 day_predicted_prices = []
+
                 for pred in preds:
                     day_predicted_prices.append(last_close * (1 + 0.01 * pred))
 
-                # Store the predicted prices for the current day
                 predicted_prices.append(day_predicted_prices)
 
-                # Plotting the actual prices
-                actual_trace = go.Scatter(
-                    x=df['date'],
-                    y=df['close'],
-                    name='Actual',
-                    line=dict(color='blue')
-                )
+            # Plotting the actual prices:
 
-                # Plotting the predicted prices for each model
-                model_names = ['Logistic Regression', 'SVM', 'XGBoost']
-                colors = ['orange', 'green', 'red']
-                predicted_traces = []
-                for i, model_name in enumerate(model_names):
-                    trace = go.Scatter(
-                        x=df['date'].iloc[window_size:],
-                        y=[pred[i] for pred in predicted_prices],
-                        name=model_name,
-                        line=dict(color=colors[i])
-                    )
-                    predicted_traces.append(trace)
+            actual_trace = go.Scatter(x=df['date'], y=df['close'], name='Actual', line=dict(color='blue'))
 
-                # Add a vertical line
-                vertical_line = go.layout.Shape(
-                    type='line',
-                    x0=df['date'].iloc[window_size],
-                    y0=df['close'].min(),
-                    x1=df['date'].iloc[window_size],
-                    y1=df['close'].max(),
-                    line=dict(color='gray', dash='dash')
-                )
+            # Plotting the predicted prices for each model:
 
-                # Configure the layout
-                layout = go.Layout(
-                    showlegend=True,
-                    xaxis=dict(tickformat="%Y-%m-%d"),
-                    title='Actual vs Predicted Stock Prices',
-                    xaxis_title='Date',
-                    yaxis_title='Price'
-                )
+            model_names = ['Logistic Regression', 'SVM', 'XGBoost']
+            colors = ['orange', 'green', 'red']
+            predicted_traces = []
 
-                # Create the figure
-                fig = go.Figure(data=[actual_trace] + predicted_traces, layout=layout)
+            for i, model_name in enumerate(model_names):
+                trace = go.Scatter(x=df['date'].iloc[window_size:], y=[pred[i] for pred in predicted_prices], name=model_name, line=dict(color=colors[i]))
+                predicted_traces.append(trace)
 
-                # Render the figure using Streamlit
-                st.plotly_chart(fig, use_container_width=True)
+            # Add a vertical line:
 
+            vertical_line = go.layout.Shape(type='line', x0=df['date'].iloc[window_size], y0=df['close'].min(),
+                                            x1=df['date'].iloc[window_size], y1=df['close'].max(), line=dict(color='gray', dash='dash'))
+
+            # Configure the layout:
+
+            layout = go.Layout(showlegend=True, xaxis=dict(tickformat="%Y-%m-%d"), title='Actual vs Predicted Stock Prices', xaxis_title='Date', yaxis_title='Price')
+
+            # Create the figure:
+
+            fig = go.Figure(data=[actual_trace] + predicted_traces, layout=layout)
+
+            # Render the figure using Streamlit:
+
+            st.plotly_chart(fig, use_container_width=True)
 
     # Creating the footer:
 
@@ -1312,11 +1301,12 @@ if selected == 'Final Analysis':
 
         with metric2:
             st.metric('Annual Return is',annual_returnp)
-            
+
             for index, row in df_summary.iloc[9:12].iterrows():
                 st.metric(label=index, value=row['Value'])
 
         with graph:
+
             # Retrieve the historical stock data for the past 52 weeks and the current price:
 
             stock_data = yf.download(ticker, period='1y')
@@ -1341,7 +1331,9 @@ if selected == 'Final Analysis':
             fig.add_trace(go.Scatter(x=[0], y=[current_price], mode='markers',
                                     line=dict(color='#8B0000', width=2), name='Current Price'))
 
-            fig.update_layout(yaxis=dict(title='Stock Price'), xaxis=dict(visible=False), legend=dict(orientation='h', yanchor='bottom', y=-0.15, xanchor='right', x=0.9), title=dict(text=f'{ticker} Price 52 Week Range'), height=350, width=300, margin=dict(l=0, r=0, t=40, b=0))
+            fig.update_layout(yaxis=dict(title='Stock Price'), xaxis=dict(visible=False),
+                              legend=dict(orientation='h',yanchor='bottom', y=-0.15, xanchor='right', x=0.9),
+                              title=dict(text=f'{ticker} Price 52 Week Range'), height=350, width=300, margin=dict(l=0, r=0, t=40, b=0))
 
             st.plotly_chart(fig)
 
