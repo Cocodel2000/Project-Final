@@ -45,6 +45,7 @@ footer = st.container()
 # Creating the alternative pages:
 
 with st.sidebar:
+
     selected = option_menu(menu_title = None, options = ['Home', 'Stock Ideas', 'Summary',
                                                          'Daily Prices', 'Monthly Returns', 'Financial Statements',
                                                          'Analysts Recommendations', 'News', 'Predictions',
@@ -167,53 +168,75 @@ if selected == 'Stock Ideas':
     with content:
 
         def convert_market_cap(value):
+
             if isinstance(value, str):
                 suffixes = {'T': 1e12, 'B': 1e9}
+
                 if value[-1] in suffixes:
                     factor = suffixes[value[-1]]
                     value = value[:-1]
                     value = int(float(value) * factor)
                 else:
                     value = int(value.replace(',', ''))
+
                 return '{:,}'.format(value)
+
             else:
                 return '{:,}'.format(value)
 
         def format_numbers(value):
+
             if isinstance(value, (int, float)):
                 return '{:,.0f}'.format(value)
+
             else:
                 return value
 
         def convert_market_cap2(value, column_name):
+
             if isinstance(value, str):
+
                 if 'B' in value:
                     factor = 1e9
+
                 elif 'M' in value:
                     factor = 1e6
+
                 elif 'K' in value:
                     factor = 1e3
+
                 else:
                     factor = 1
+
                 value = float(value.replace(',', '').replace('$', '').replace(column_name, '').replace('M','').replace('B','')) * factor
+
             if column_name in ['Market Cap']:
                 return '{:,.0f}'.format(value)
+
             else:
                 return '{:,.2f}'.format(value)
  
         def convert_volume2(value, column_name):
+
             if isinstance(value, str):
+
                 if 'B' in value:
                     factor = 1e9
+
                 elif 'M' in value:
                     factor = 1e6
+
                 elif 'K' in value:
                     factor = 1e3
+
                 else:
                     factor = 1
+
                 value = float(value.replace(',', '').replace('$', '').replace(column_name, '').replace('M','').replace('B','')) * factor
+
             if column_name in ['Volume']:
                 return '{:,.0f}'.format(value)
+
             else:
                 return '{:,.2f}'.format(value)
 
@@ -337,19 +360,22 @@ if selected == 'Summary':
         for index, row in df_summary.iloc[5:10].iterrows():
                col3.metric(label=index, value=row['Value'])
 
-        # Explaining the different data
+        # Explaining the different data:
+
+        st.markdown('------------------------------------------')
+        st.markdown('')
         st.markdown('''
         Those data above are useful, basic data regarding a stock. They are most of the time very helpful to decide what to do with the stock.
         - Previous close, Open, Bid, Ask are data related to today's trading. 
         - Day's range helps you seing where you situate yourself at the moment you want to buy. It is mostly useful when there are volatile days as it increases the range.
         - 52 week range is super helpful to know where you are but this time on a yearly basis. It helps knowing it the stock is cheap or expensive at the moment. You need other data to determine that.
-        - Volume and average volume give you information on "Is this stock traded a lot today ? compared to what it is normally"
+        - Volume and average volume give you information on "Is this stock traded a lot today? Compared to what it is normally".
         - Market Cap allows you to estimate if it is a big company or not. Most of the time big company are more secured as they experience high liquidity and "low" volatility.
         - Beta is a measure of the volatility of this stock compared to the market. A beta < 1 is less volatile and > 1 is more. Volatility is a measure of risk.
         - PE ratio (price to earnings) is simply the multiple at which the stock is traded compared to its revenue. It is a comparative ratio to peers stock.
-        A small PE ratio consider the stock as cheap compared to peers and inversely 
-        - EPS (earnings per share) is the revenue divided by the number of stock shares
-        - Earnings date is the next date at which the company publish results
+        A small PE ratio consider the stock as cheap compared to peers and inversely.
+        - EPS (earnings per share) is the revenue divided by the number of stock shares.
+        - Earnings date is the next date at which the company publish results.
         - Dividend yield is the return you can expect from this stock just regarding dividend not a possible stock price increase. 
         - Ex-dividend date is the date at which the dividend it detached from the stock price.
         ''')
@@ -419,11 +445,13 @@ if selected == 'Daily Prices':
         # Displaying the dataframe:
 
         with dataframe_daily:
+
             st.dataframe(daily_df2)
 
         # Displaying the calculations:
 
         with calc_daily:
+
             annual_return = dfb['% Change'].mean()*252
             annual_returnp = '{:.2%}'.format(annual_return)
             st.metric('Annual Return is',annual_returnp)
@@ -434,9 +462,11 @@ if selected == 'Daily Prices':
             risk_adj_returnp = '{:.2%}'.format(risk_adj_return)
             st.metric('Risk Adjusted Return is',risk_adj_returnp)
 
-            st.markdown('The annual return gives you the return the stock experienced during that period')
-            st.markdown('The standard deviation is the measure of risk and volatility used in finance')
-            st.markdown('The risk adjusted return is measured as the annual return divided by the standard deviation. The goal is to compare it to cash return')
+        st.markdown('------------------------------------------')
+        st.markdown('')
+        st.markdown('The annual return gives you the return the stock experienced during that period.')
+        st.markdown('The standard deviation is the measure of risk and volatility used in finance.')
+        st.markdown('The risk adjusted return is measured as the annual return divided by the standard deviation. The goal is to compare it to cash return.')
 
     # Creating the footer:
 
@@ -511,11 +541,13 @@ if selected == 'Monthly Returns':
         # Displaying the dataframe:
 
         with dataframe_daily:
+
             st.dataframe(monthly_df)
 
         # Displaying the calculations:
 
         with calc_daily:
+
             annual_return = dfb['% Change'].mean()*252
             annual_returnp = '{:.2%}'.format(annual_return)
             st.metric('Annual Return is',annual_returnp)
@@ -795,6 +827,7 @@ if selected == 'Analysts Recommendations':
         graph, metrics = st.columns([5,2])
       
         with graph:
+
             def plot_stock_data(stock_data):
                 symbol = stock_data[0]['symbol']
                 latest_data = stock_data[0]
@@ -826,6 +859,7 @@ if selected == 'Analysts Recommendations':
             plot_stock_data(finnhub_client.recommendation_trends(ticker))
 
         with metrics:
+
             recommendation = float(recommendation)
 
             if recommendation >= 1 and recommendation < 1.5:
@@ -851,9 +885,6 @@ if selected == 'Analysts Recommendations':
             st.metric (label='Mean target price', value=f'${targetMeanPrice}')
             st.metric (label='Current price', value=f'${currentPrice}')
 
-            st.markdown('You can use those data made by experts to help you decide what to do with that stock. But be aware that they are no medium.')
-            st.markdown('You should analyse other data then that before making a decision but is is a useful source of information.')
-
         def create_stock_dataframe(stock_data):
             periods = [data['period'] for data in stock_data]
             buys = [data['buy'] for data in stock_data]
@@ -870,6 +901,11 @@ if selected == 'Analysts Recommendations':
 
         df = create_stock_dataframe(finnhub_client.recommendation_trends(ticker))
         st.write(df)
+
+        st.markdown('------------------------------------------')
+        st.markdown('')
+        st.markdown('You can use those data made by experts to help you decide what to do with that stock. But be aware that they are no medium.')
+        st.markdown('You should analyse other data then that before making a decision but is is a useful source of information.')
 
     # Creating the footer:
 
@@ -971,6 +1007,7 @@ if selected == 'Predictions':
         # EMA model:
 
         with ema:
+
             st.subheader(f'EMA model for {ticker}')
             st.markdown('')
             st.markdown('''
@@ -1042,6 +1079,7 @@ if selected == 'Predictions':
         # Other models:
 
         with other_models:
+
             st.subheader(f'Different models trying to predict future prices for {ticker}')
             st.markdown('')
             st.markdown('''
@@ -1168,7 +1206,7 @@ if selected == 'Predictions':
 
             # Configure the layout:
 
-            fig.update_layout(title='Actual vs Predicted Stock Prices', xaxis_title='Date', yaxis_title='Price', showlegend=True,
+            fig.update_layout(title='Actual vs Predicted Stock Prices', yaxis_title='Price', showlegend=True,
                               xaxis=dict(tickformat='%Y-%m-%d', showticklabels=False ),
                               shapes=[dict(type='line', x0=df['date'].iloc[window_size],y0=min(df['close']), x1=df['date'].iloc[window_size],y1=max(df['close']),
                                            line=dict(color='#DCD6D0', width=1,dash='dash')) for window_size in range(window_size, len(df['date']), window_size)])
@@ -1203,7 +1241,7 @@ if selected == 'Final Analysis':
         st.markdown('')
         st.markdown ('**According to analysts:**')
 
-        metric, metric2, graph = st.columns ([5,5,5])
+        metric, metric2, graph = st.columns ([1,1,1])
 
         # Analyst recommandation Yahoo Finance:
 
@@ -1315,12 +1353,14 @@ if selected == 'Final Analysis':
         df_summary = df_summary.rename(columns={0: 'Value'})
     
         with metric:
+
             st.metric (label='Average recommendation', value=f'{recommendation}')
             st.metric (label='Analyst verdict', value=f'{status}')
             st.metric (label='Mean target price', value=f'${targetMeanPrice}')
             st.metric (label='Current price', value=f'${currentPrice}')
 
         with metric2:
+
             st.metric('Annual Return is',annual_returnp)
 
             for index, row in df_summary.iloc[9:12].iterrows():
